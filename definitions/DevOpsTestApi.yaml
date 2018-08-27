@@ -34,14 +34,22 @@ x-ibm-configuration:
         runtime-url: $(TARGET_URL)
     sb:
       properties:
-        runtime-url: 'http://localhost:4001'
+        runtime-url: 'https://DevOpsTestNeel1.eu-gb.mybluemix.net'
+        invoke-tls-profile: 'client:Loopback-client'
   assembly:
     execute:
       - invoke:
-          target-url: >-
-            $(runtime-url)$(request.path)$(request.search)
-          tls-profile: 'client:Loopback-client'
-  gateway: datapower-gateway
+          target-url: $(runtime-url)$(request.path)$(request.search)
+          tls-profile: $(invoke-tls-profile)
+  properties:
+    runtime-url:
+      value: ''
+      description: ''
+      encoded: false
+    invoke-tls-profile:
+      value: ''
+      description: ''
+      encoded: false
 paths:
   '/Users/{id}/accessTokens/{fk}':
     get:
@@ -233,13 +241,13 @@ paths:
           schema:
             $ref: '#/definitions/User'
       deprecated: false
-    patch:
+    put:
       tags:
         - User
       summary: >-
         Patch an existing model instance or insert a new one into the data
         source.
-      operationId: User.patchOrCreate
+      operationId: User.upsert__put_Users
       parameters:
         - name: data
           in: body
@@ -254,13 +262,13 @@ paths:
           schema:
             $ref: '#/definitions/User'
       deprecated: false
-    put:
+    patch:
       tags:
         - User
       summary: >-
-        Replace an existing model instance or insert a new one into the data
+        Patch an existing model instance or insert a new one into the data
         source.
-      operationId: User.replaceOrCreate__put_Users
+      operationId: User.upsert__patch_Users
       parameters:
         - name: data
           in: body
@@ -304,7 +312,7 @@ paths:
       summary: >-
         Replace an existing model instance or insert a new one into the data
         source.
-      operationId: User.replaceOrCreate__post_Users_replaceOrCreate
+      operationId: User.replaceOrCreate
       parameters:
         - name: data
           in: body
@@ -417,33 +425,6 @@ paths:
           schema:
             $ref: '#/definitions/User'
       deprecated: false
-    put:
-      tags:
-        - User
-      summary: >-
-        Replace attributes for a model instance and persist it into the data
-        source.
-      operationId: 'User.replaceById__put_Users_{id}'
-      parameters:
-        - name: id
-          in: path
-          description: Model id
-          required: true
-          type: string
-          format: JSON
-        - name: data
-          in: body
-          description: Model instance data
-          required: false
-          schema:
-            description: Model instance data
-            $ref: '#/definitions/User'
-      responses:
-        '200':
-          description: Request was successful
-          schema:
-            $ref: '#/definitions/User'
-      deprecated: false
     delete:
       tags:
         - User
@@ -462,13 +443,40 @@ paths:
           schema:
             type: object
       deprecated: false
+    put:
+      tags:
+        - User
+      summary: >-
+        Patch attributes for a model instance and persist it into the data
+        source.
+      operationId: 'User.prototype.updateAttributes__put_Users_{id}'
+      parameters:
+        - name: data
+          in: body
+          description: An object of model property name/value pairs
+          required: false
+          schema:
+            description: An object of model property name/value pairs
+            $ref: '#/definitions/User'
+        - name: id
+          in: path
+          description: User id
+          required: true
+          type: string
+          format: JSON
+      responses:
+        '200':
+          description: Request was successful
+          schema:
+            $ref: '#/definitions/User'
+      deprecated: false
     patch:
       tags:
         - User
       summary: >-
         Patch attributes for a model instance and persist it into the data
         source.
-      operationId: User.prototype.patchAttributes
+      operationId: 'User.prototype.updateAttributes__patch_Users_{id}'
       parameters:
         - name: data
           in: body
@@ -496,7 +504,7 @@ paths:
       summary: >-
         Replace attributes for a model instance and persist it into the data
         source.
-      operationId: 'User.replaceById__post_Users_{id}_replace'
+      operationId: User.replaceById
       parameters:
         - name: id
           in: path
@@ -648,28 +656,11 @@ paths:
         '204':
           description: Request was successful
       deprecated: false
-  '/Users/{id}/verify':
-    post:
-      tags:
-        - User
-      summary: Trigger user's identity verification with configured verifyOptions
-      operationId: User.prototype.verify
-      parameters:
-        - name: id
-          in: path
-          description: User id
-          required: true
-          type: string
-          format: JSON
-      responses:
-        '204':
-          description: Request was successful
-      deprecated: false
   /Users/confirm:
     get:
       tags:
         - User
-      summary: Confirm a user registration with identity verification token.
+      summary: Confirm a user registration with email verification token.
       operationId: User.confirm
       parameters:
         - name: uid
@@ -700,40 +691,6 @@ paths:
           required: true
           schema:
             type: object
-      responses:
-        '204':
-          description: Request was successful
-      deprecated: false
-  /Users/change-password:
-    post:
-      tags:
-        - User
-      summary: Change a user's password.
-      operationId: User.changePassword
-      parameters:
-        - name: oldPassword
-          in: formData
-          required: true
-          type: string
-        - name: newPassword
-          in: formData
-          required: true
-          type: string
-      responses:
-        '204':
-          description: Request was successful
-      deprecated: false
-  /Users/reset-password:
-    post:
-      tags:
-        - User
-      summary: Reset user's password via a password-reset token.
-      operationId: User.setPassword
-      parameters:
-        - name: newPassword
-          in: formData
-          required: true
-          type: string
       responses:
         '204':
           description: Request was successful
@@ -769,11 +726,6 @@ definitions:
         description: time to live in seconds (2 weeks by default)
         type: number
         format: double
-      scopes:
-        description: Array of scopes granted to this access token.
-        type: array
-        items:
-          type: string
       created:
         type: string
         format: date-time
@@ -789,10 +741,22 @@ definitions:
         type: string
       username:
         type: string
+      credentials:
+        type: object
+      challenges:
+        type: object
       email:
         type: string
       emailVerified:
         type: boolean
+      status:
+        type: string
+      created:
+        type: string
+        format: date-time
+      lastUpdated:
+        type: string
+        format: date-time
       id:
         type: number
         format: double
