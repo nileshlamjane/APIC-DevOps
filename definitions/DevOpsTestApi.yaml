@@ -34,7 +34,7 @@ x-ibm-configuration:
         runtime-url: $(TARGET_URL)
     sb:
       properties:
-        runtime-url: 'https://DevOpsTestNeel1.eu-gb.mybluemix.net'
+        runtime-url: 'https://DevOpsTestApiApp1.apic.eu-gb.mybluemix.net'
         invoke-tls-profile: 'client:Loopback-client'
   assembly:
     execute:
@@ -50,6 +50,7 @@ x-ibm-configuration:
       value: ''
       description: ''
       encoded: false
+  gateway: datapower-gateway
 paths:
   '/Users/{id}/accessTokens/{fk}':
     get:
